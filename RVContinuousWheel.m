@@ -25,6 +25,18 @@
 		[tickMarkShadow setShadowBlurRadius:self.bounds.size.height*0.02];
 		[tickMarkShadow setShadowColor:[[NSColor blackColor] colorWithAlphaComponent:1.0]];
 		[tickMarkShadow setShadowOffset:NSMakeSize(0, 0)];
+		
+		fillGradient = [[NSGradient alloc] initWithStartingColor:[NSColor colorWithDeviceRed:0.17 green:0.18 blue:0.2 alpha:1.0]
+													 endingColor:[NSColor colorWithDeviceRed:0.27 green:0.28 blue:0.3 alpha:1.0]];
+        
+		highlightGradient = [[NSGradient alloc] initWithColorsAndLocations:[NSColor clearColor], 0.0,
+                             [NSColor colorWithCalibratedWhite:0.8 alpha:0.3], 0.5,
+                             [NSColor clearColor], 1.0, nil];
+		
+		outsideGradient = [[NSGradient alloc] initWithColorsAndLocations:[[NSColor blackColor] colorWithAlphaComponent:0.5], 0.0,
+						   [NSColor clearColor], 0.25,
+						   [NSColor clearColor], 0.75,
+						   [[NSColor blackColor] colorWithAlphaComponent:0.5], 1.0, nil];
     }
     
     return self;
@@ -45,16 +57,17 @@
 	
 	[path moveToPoint:points[0]];
 	[path lineToPoint:points[1]];
-	NSPoint controlPoint1 = NSMakePoint(bounds.size.width / 2, bounds.size.height * 0.80);
+	NSPoint controlPoint1 = NSMakePoint(bounds.size.width / 2, bounds.size.height * 0.83);
 	[path curveToPoint:points[2] controlPoint1:controlPoint1 controlPoint2:controlPoint1];
 	[path lineToPoint:points[3]];
-	NSPoint controlPoint2 = NSMakePoint(bounds.size.width / 2, bounds.size.height * 0.2);
+	NSPoint controlPoint2 = NSMakePoint(bounds.size.width / 2, bounds.size.height * 0.17);
 	[path curveToPoint:points[0] controlPoint1:controlPoint2 controlPoint2:controlPoint2];
 	
-	[[NSColor rvReallyDarkGrayColor] setStroke];
-	[[NSColor rvDarkGrayColor] setFill];
-	[path setLineWidth:2.0];
+	[[NSColor rvMediumLightGrayColor] setStroke];
 	
+	[path setLineWidth:0.0];
+	[fillGradient drawInBezierPath:path angle:90.0];
+	[highlightGradient drawInBezierPath:path angle:0.0];
 	[[NSGraphicsContext currentContext] saveGraphicsState];
 	[outerShadow set];
 	[path fill];
@@ -65,9 +78,9 @@
 	NSBezierPath *innerLinePath = [NSBezierPath bezierPath];
 	[innerLinePath setLineWidth:3.0];
 	CGFloat width = bounds.size.width;
-	CGFloat height = bounds.size.height; // will be clipped to "path"
+	CGFloat height = bounds.size.height; // greater than length of curve in the middle, will be clipped to "path"
 	CGFloat startingX = bounds.origin.x + offset;
-	CGFloat startingY = bounds.size.height * 0.25;
+	CGFloat startingY = bounds.size.height * 0.2; // top of curve, will be clipped to "path"
 	
 	CGFloat sectionWidth = bounds.size.width * 0.05;
 	
@@ -87,16 +100,16 @@
 	}
 	
 	[[NSGraphicsContext currentContext] saveGraphicsState];
-	
-	[[NSColor rvMediumLightGrayColor] set];
+	[[NSColor colorWithDeviceRed:0.55 green:0.55 blue:0.56 alpha:1.0] set];
 	[path addClip];
-	[tickMarkShadow set];
+	//[tickMarkShadow set];
 	[innerLinePath stroke];
 	[[NSGraphicsContext currentContext] restoreGraphicsState];
+	
+	[outsideGradient drawInBezierPath:path angle:0.0];
 }
 
 - (void) mouseDown:(NSEvent *)theEvent {
-	[super mouseDown:theEvent];
 	lastDragPoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
 	if ([self.delegate respondsToSelector:@selector(wheelDidBeginMovementWithOffset:)]) {
 		[self.delegate wheelDidBeginMovementWithOffset:offset];
@@ -125,7 +138,6 @@
 }
 
 - (void) mouseUp:(NSEvent *)theEvent {
-	[super mouseUp:theEvent];
 	lastDragPoint = CGPointZero;
 	CGFloat sectionWidth =  CGRectInset(self.bounds, 2.0, 2.0).size.width * 0.05;
 	// Reduce the size of the offset to the smallest number

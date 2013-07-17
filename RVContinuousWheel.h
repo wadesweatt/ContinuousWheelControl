@@ -19,6 +19,7 @@
 	CGFloat offset;
 	CGPoint lastDragPoint;
 	NSShadow *outerShadow, *tickMarkShadow;
+	NSGradient *fillGradient, *highlightGradient, *outsideGradient;
 }
 @property (nonatomic, weak)	id <RVContinuousWheelControlling> delegate;
 @end
